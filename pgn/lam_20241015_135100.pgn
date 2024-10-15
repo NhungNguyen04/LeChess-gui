@@ -1,0 +1,9 @@
+[Event "LeChess Game"]
+[Site "Unknown"]
+[Date "2024.10.15"]
+[Round "1"]
+[White "lam"]
+[Black "Computer"]
+[Result "0-1"]
+
+1. d2d3 e7e5 2. c2c4 c7c6 3. c4c5 f8c5 4. d3d4 c5d4 5. e2e3 d4b6 6. e3e4 d7d6 7. b2b3 c8e6 8. b3b4 g8f6 9. b4b5 f6e4 10. b5c6 b6f2 11. e1e2 b8c6 12. d1d2 f2d4 13. d2d3 e4c5 14. d3c3 e5e4 15. c3d4 c6d4 16. e2d2 d8f6 17. d2d1 f6f1 18. d1d2 f1g2 19. d2e1 c5d3 20. e1d1 g2c2
