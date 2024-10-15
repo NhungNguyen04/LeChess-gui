@@ -61,8 +61,6 @@ def game_over_message(message):
     messagebox.showinfo("Game Over", message)
 
 
-
-
 unicode_map = {"K": "\u2654",
                "Q": "\u2655",
                "R": "\u2656",
@@ -143,7 +141,7 @@ class GUI(Tk):
             filetypes=[("PGN Files", "*.pgn")],
             initialfile=f"{self.username}_{current_time}.pgn"
         )
-        
+
         if file_path:
             with open(file_path, "w") as pgn_file:
                 pgn_file.write("\n".join(pgn_data))
@@ -152,13 +150,13 @@ class GUI(Tk):
 
     def on_user_move(self, move):
         self.moves.append(move)  # Append user move
-        
+
     def on_computer_move(self, move):
         self.moves.append(move)  # Append computer move
 
-    
+
     #----------------------------------------------------------------------------------
-    
+
     # Menu bar
     def new_game(self):
         self.bot.set_fen_position(
@@ -173,7 +171,7 @@ class GUI(Tk):
         self.b_list[btn_map[m[2:]]].configure(bg='#AFFFAF')
 
     def about(self):
-        about_text = ''' 
+        about_text = '''
         LeChess
         '''
         msgbox.showinfo('About', about_text)
@@ -204,7 +202,7 @@ class GUI(Tk):
                 button_frame.pack()
 
         except FileNotFoundError:
-            messagebox.showerror("Failed to load PGN file")
+            messagebox.showerror("Failed to load PGN file! Please try again.")
 
     def next_move(self):
         if self.current_move_index < len(self.moves_pgn):
@@ -320,7 +318,7 @@ class GUI(Tk):
     # Chessboard helper functions
     def mark_move(self, move):
         m = str(move)
-        
+
         # Check if it's a promotion (which will have 5 characters, like 'c7c8q')
         if len(m) == 5:
             # Handle promotion moves (e.g., 'c7c8q' should be treated as 'c7c8')
@@ -518,7 +516,7 @@ if __name__ == '__main__':
     )
     submit_button.pack(pady=20)
     # Bind the Enter key to the submit function
-    root.bind('<Return>', lambda event: submit_username()) 
+    root.bind('<Return>', lambda event: submit_username())
 
     root.mainloop()
 
