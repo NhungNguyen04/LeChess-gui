@@ -165,6 +165,8 @@ class GUI(Tk):
                     return
                     # Create the control buttons
                 self.new_game()
+                white_player = game.headers.get("White", "Unknown")
+                self.status.config(text=f"{white_player} vs Computer")
                 self.moves_pgn = [move.uci() for move in game.mainline_moves()]
                 self.current_move_index = 0
                 button_frame = tk.Frame(self)
