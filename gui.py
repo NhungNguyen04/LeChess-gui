@@ -2,6 +2,9 @@ import tkinter
 import datetime
 from tkinter import *
 import tkinter.messagebox as msgbox
+import tkinter.filedialog as filedialog
+import tkinter as tk
+from tkinter import ttk
 
 import platform
 from stockfish import Stockfish
@@ -25,9 +28,22 @@ import os
 # black knight    ♞   U+265E
 # black pawn	  ♟   U+265F
 
+PRIMARY_BG = "#2A9D8F"  # Teal for primary elements
+SECONDARY_BG = "#264653"  # Dark teal for secondary elements
+TEXT_COLOR = "#FFFFFF"  # White for text
+BUTTON_BG = "#E9C46A"  # Soft gold for buttons
+HOVER_BG = "#F4A261"  # Darker gold for hover state
+CHESSBOARD_LIGHT = "#F0D9B5"  # Light squares on the chessboard
+CHESSBOARD_DARK = "#B58863"  # Dark squares on the chessboard
+
+FONT_LARGE = ("Helvetica", 14, 'bold')
+FONT_SMALL = ("Helvetica", 12)
+
+
 FONT = ("Work sans", 12)
 BLUE = "#277595"
 YELLOW = "#E9C46A"
+
 import tkinter as tk
 from tkinter import messagebox
 
@@ -43,8 +59,6 @@ def submit_username():
 
 def game_over_message(message):
     messagebox.showinfo("Game Over", message)
-
-
 
 
 unicode_map = {"K": "\u2654",
@@ -77,6 +91,7 @@ btn_map = {
 }
 # ----------------------------------------------------------------------------------
 
+
 # Save moves to PGN format
 
 class GUI(Tk):
@@ -107,7 +122,7 @@ class GUI(Tk):
         pgn_data.append(f'[Black "Computer"]')
         pgn_data.append(f'[Result "{result}"]\n')
 
-        # Format moves
+        # Format moves with a newline after every 6 moves for readability
         pgn_moves = ""
         for i in range(0, len(self.moves), 2):
             move_num = (i // 2) + 1
@@ -115,22 +130,32 @@ class GUI(Tk):
             computer_move = self.moves[i + 1] if i + 1 < len(self.moves) else ""
             pgn_moves += f'{move_num}. {user_move} {computer_move} '
 
+            if (i // 2 + 1) % 3 == 0:  # Add a newline after every 3 move pairs (6 moves)
+                pgn_moves += "\n"
+
         pgn_data.append(pgn_moves.strip())
         current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        pgn_filename = f"{self.username}_{current_time}.pgn"
-        pgn_filepath = os.path.join("pgn", pgn_filename)
 
-        # Write PGN to file
-        with open(pgn_filepath, "w") as pgn_file:
-            pgn_file.write("\n".join(pgn_data))
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".pgn",
+            filetypes=[("PGN Files", "*.pgn")],
+            initialfile=f"{self.username}_{current_time}.pgn"
+        )
 
-    # Store user's move
+        if file_path:
+            with open(file_path, "w") as pgn_file:
+                pgn_file.write("\n".join(pgn_data))
+            print(f"Game saved to {file_path}")
+
+
     def on_user_move(self, move):
         self.moves.append(move)  # Append user move
 
-    # Store computer's move
     def on_computer_move(self, move):
         self.moves.append(move)  # Append computer move
+
+
+    #----------------------------------------------------------------------------------
 
     # Menu bar
     def new_game(self):
@@ -146,7 +171,7 @@ class GUI(Tk):
         self.b_list[btn_map[m[2:]]].configure(bg='#AFFFAF')
 
     def about(self):
-        about_text = ''' 
+        about_text = '''
         LeChess
         '''
         msgbox.showinfo('About', about_text)
@@ -163,23 +188,23 @@ class GUI(Tk):
                 if game is None:
                     messagebox.showerror("Error", "Failed to read PGN file. The file might be corrupted.")
                     return
-                    # Create the control buttons
+                # Create the control buttons
                 self.new_game()
                 white_player = game.headers.get("White", "Unknown")
                 self.status.config(text=f"{white_player} vs Computer")
                 self.moves_pgn = [move.uci() for move in game.mainline_moves()]
                 self.current_move_index = 0
                 button_frame = tk.Frame(self)
-                prev_button = tk.Button(button_frame, text="Previous", command=self.prev_move, background=YELLOW)
+                prev_button = ttk.Button(button_frame, text="Previous", command=self.prev_move)
                 prev_button.pack(side=tk.LEFT)
-                next_button = tk.Button(button_frame, text="Next", command=self.next_move, background=YELLOW)
+                next_button = ttk.Button(button_frame, text="Next", command=self.next_move)
                 next_button.pack(side=tk.LEFT)
-                reset_button = tk.Button(button_frame, text="Reset", command=self.new_game, background=YELLOW)
+                reset_button = ttk.Button(button_frame, text="Reset", command=self.new_game)
                 reset_button.pack(side=tk.LEFT)
                 button_frame.pack()
 
         except FileNotFoundError:
-            messagebox.showerror("Can not load pgn file")
+            messagebox.showerror("Failed to load PGN file! Please try again.")
 
     def next_move(self):
         if self.current_move_index < len(self.moves_pgn):
@@ -213,15 +238,37 @@ class GUI(Tk):
 
     # -------------------------------------------------------------------------------
     # Status bar
-
     def create_status_bar(self, username):
-        # Create the status label with username on the left and the app version on the right
-        self.status = Label(self, text=f"{username} vs computer | LeChess v.1.0",
-                            font=FONT, borderwidth=1, relief=SUNKEN,
-                            pady=4)  # 'w' for left (west) alignment
-        self.status.configure(background="#E9C46A")
-        self.status.pack(side=BOTTOM, fill=X)
-        Label(window).pack(side=BOTTOM)  # Spacer
+            style = ttk.Style()
+            style.configure(
+                'StatusBar.TLabel',
+                background=PRIMARY_BG,
+                foreground=TEXT_COLOR,
+                font=FONT_SMALL,
+                padding=10
+            )
+
+            # Add a separator for a cleaner layout
+            separator = ttk.Separator(self, orient='horizontal')
+            separator.pack(side=tk.BOTTOM, fill=tk.X)
+
+            # Create the dynamic status bar
+            self.status = ttk.Label(
+                self,
+                text=f"{username} vs Computer | LeChess V1.0",
+                style='StatusBar.TLabel',
+                anchor='center'
+            )
+            self.status.pack(side=tk.BOTTOM, fill=tk.X)
+
+            # Periodic update for dynamic elements like time
+            self.update_status_bar()
+
+    def update_status_bar(self):
+        current_time = datetime.datetime.now().strftime("%H:%M:%S")
+        self.status.config(text=f"{self.username} vs Computer | LeChess V1.0 | {current_time}")
+        self.after(1000, self.update_status_bar)
+
 
     # -------------------------------------------------------------------------------
     # Chessboard
@@ -231,11 +278,20 @@ class GUI(Tk):
 
         # Generate 64 button widgets
         self.b_list = []
-        font = f"consolas {font} normal"
+        font = f"Helvetica {font} bold"
 
         for each in range(0, 64):
-            self.b_list.append(Button(self.grid_map, text=' ', command=lambda each=each: self.on_button_click(
-                each), font=font, width=w, height=h))
+            self.b_list.append(Button(
+                self.grid_map,
+                text=' ',
+                command=lambda each=each: self.on_button_click(each),
+                font=font,
+                width=w,
+                height=h,
+                relief='flat',    # Use 'flat' relief for a modern look
+                borderwidth=0     # Remove borders
+            ))
+
 
         # Place 64 button widgets in a 8x8 grid
         each = 0
@@ -245,22 +301,38 @@ class GUI(Tk):
 
                 if r % 2 != 0:
                     if each % 2 == 0:
-                        self.b_list[each].configure(bg='#277595')
+                        self.b_list[each].configure(bg='#B58863')
                 else:
                     if each % 2 != 0:
-                        self.b_list[each].configure(bg='#277595')
+                        self.b_list[each].configure(bg='#F0D9B5')
                 each = each + 1
 
         self.grid_map.pack(side=BOTTOM)
         self.update_board()
 
+
+
+    def game_over_message(self, message):
+        messagebox.showinfo("Game Over", f"🏁 {message} 🏁\nThank you for playing, {self.username}!")
+
+
     # -------------------------------------------------------------------------------
     # Chessboard helper functions
-
     def mark_move(self, move):
         m = str(move)
-        self.b_list[btn_map[m[:2]]].configure(bg='#AFAFFF')
-        self.b_list[btn_map[m[2:]]].configure(bg='#AFAFFF')
+
+        # Check if it's a promotion (which will have 5 characters, like 'c7c8q')
+        if len(m) == 5:
+            # Handle promotion moves (e.g., 'c7c8q' should be treated as 'c7c8')
+            move_start = m[:2]
+            move_end = m[2:4]
+        else:
+            move_start = m[:2]
+            move_end = m[2:]
+
+        self.b_list[btn_map[move_start]].configure(bg='#AFAFFF')
+        self.b_list[btn_map[move_end]].configure(bg='#AFAFFF')
+
 
     def remove_marking(self):
         each = 0
@@ -270,10 +342,10 @@ class GUI(Tk):
 
                 if r % 2 != 0:
                     if each % 2 == 0:
-                        self.b_list[each].configure(bg='#277595')
+                        self.b_list[each].configure(bg='#B58863')
                 else:
                     if each % 2 != 0:
-                        self.b_list[each].configure(bg='#277595')
+                        self.b_list[each].configure(bg='#F0D9B5')
                 each = each + 1
 
     def position_has_white_piece(self, position):
@@ -337,7 +409,7 @@ class GUI(Tk):
             if len(self.usr_move) == 2:
                 self.remove_marking()
                 self.usr_move += c + str(r)
-                print(f"U: {self.usr_move}")
+                print(f"User's move: {self.usr_move}")
 
                 if self.position_has_white_piece(self.usr_move[:2]) and self.position_has_white_piece(self.usr_move[2:]):
                     self.usr_move = self.usr_move[2:]
@@ -371,7 +443,7 @@ class GUI(Tk):
                 # Computers turn
                 best_move = self.bot.get_best_move()
                 self.on_computer_move(best_move)
-                print(f"C: {best_move}\n")
+                print(f"Computer's move: {best_move}\n")
 
                 self.bot.make_moves_from_current_position([best_move])
                 self.mark_move(best_move)
@@ -384,7 +456,7 @@ class GUI(Tk):
                 elif c == 'Checkmate':
                     self.game_over = True
                     self.status.config(text=c)
-                    print("User loose")
+                    print("User lose")
                     game_over_message(f"You lost, {username} 🥹")
                     self.save_to_pgn("0-1")
                     return
@@ -418,7 +490,7 @@ class GUI(Tk):
 
 # -------------------------------------------------------------------------------------------
 if __name__ == '__main__':
-    print("Please minimize this window")
+    print("Welcome to LeChess! Minimize this window for better experience!")
     os_name = platform.system().lower()
     # Create the main window
     root = tk.Tk()
@@ -426,26 +498,27 @@ if __name__ == '__main__':
     root.configure(bg="#ffffff")
     root.geometry("400x200")
 
+    style = ttk.Style()
+    style.configure('TButton', font=("Work sans", 12))
+
     # Create and place the label
-    label = tk.Label(root, text="Enter your username:", font=FONT, bg="#ffffff")
+    # Create and place the label
+    label = ttk.Label(root, text="Enter your username:", font=FONT, background="#ffffff")
     label.pack(pady=20)
 
     # Create and place the entry field
-    entry = tk.Entry(root, width=30, font=('Work sans', 12), borderwidth=2, relief=tk.GROOVE, bg="#f0f0f0")
+    entry = ttk.Entry(root, width=30, font=('Work sans', 12))
     entry.pack(pady=5)
 
     # Create and place the submit button
-    submit_button = tk.Button(root,
-                          text="Submit",  # Button text
-                          font=("Work sans", 12),  # Font type, size, and style
-                          bg=BLUE,  # Background color (green)
-                          fg='white',  # Text color
-                          width=10,  # Width of the button (in characters)
-                          height=1,  # Height of the button (in lines)
-                          cursor="hand2",
-                        command=submit_username
-                              )# Change cursor to hand pointer)
+    submit_button = ttk.Button(
+        root,
+        text="Submit",
+        command=submit_username
+    )
     submit_button.pack(pady=20)
+    # Bind the Enter key to the submit function
+    root.bind('<Return>', lambda event: submit_username())
 
     root.mainloop()
 
@@ -458,7 +531,7 @@ if __name__ == '__main__':
     window.create_status_bar(username=username)
 
     if 'windows' in os_name:
-        window.create_chess_board(18, 6, 2)
+        window.create_chess_board(18, 5, 2)
     else:
         window.create_chess_board(18, 4, 2)
 
